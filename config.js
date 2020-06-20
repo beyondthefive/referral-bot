@@ -8,5 +8,6 @@ module.exports = {
 	teachingTeamRole: '696472686087634995',
 	orgRepRole: '700171933534257183',
 	recordsKeeperRole: '701913481514975362',
-	enrolledRole: '696391357022863392'
+	enrolledRole: '696391357022863392',
+	botChannel: '706570014458773755'
 };

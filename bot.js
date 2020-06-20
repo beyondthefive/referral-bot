@@ -1,7 +1,6 @@
 const Discord = require('discord.js');
+const http = require('https');
 require('dotenv').config();
-const express = require('express');
-const app = express();
 const config = require('./config.js');
 const Airtable = require('airtable');
 const base = new Airtable({apiKey: process.env.API_KEY}).base(
@@ -17,22 +16,50 @@ function sleep(n) {
 	msleep(n * 1000);
 }
 
-app.listen(() => console.log('Server started'));
-
-app.use('/', (request, res) => {
-	res.send('Online.');
-});
-
 const client = new Discord.Client();
 
 client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 });
 
-const updateReferrals = () => {
+const updateReferrals = async () => {
+	const marketingRefCodes = [];
+	const options = {
+		method: 'GET',
+		hostname: 'api.airtable.com',
+		port: null,
+		path: '/v0/appjqlJY5yL356yoX/Codes?maxRecords=100&view=Grid%20view',
+		headers: {
+			authorization: 'Bearer ' + process.env.API_KEY,
+			'content-length': '0'
+		}
+	};
+
+	const request = http.request(options, res => {
+		const chunks = [];
+
+		res.on('data', chunk => {
+			chunks.push(chunk);
+		});
+
+		res.on('end', () => {
+			const body = Buffer.concat(chunks);
+
+			JSON.parse(body.toString()).records.map(r => {
+				marketingRefCodes.push({
+					code: r.fields.Code,
+					credits: r.fields.Credits
+				});
+			});
+		});
+	});
+
+	request.end();
+
 	const logChannel = client.guilds.cache
 		.get(config.guildID)
 		.channels.cache.get(config.logChannelID);
+
 	recordIDs = [];
 	refCodes = [];
 	const recordsList = [];
@@ -45,7 +72,7 @@ const updateReferrals = () => {
 				const recordsSection = [];
 				records.forEach(async record => {
 					if (record.get('Assigned Referral Code') == null) {
-						const code = crc32(record.get('Submission Time')).toString(16);
+						const code = crc32(record.get('Name') + record.get('Submission Time')).toString(16);
 						base('Students')
 							.update([
 								{
@@ -101,7 +128,12 @@ const updateReferrals = () => {
 				for (let i = 0; i < recordsList.length; i++) {
 					// Referred people
 					recordsList.map(r => {
-						if (recordsList[i].assignedRefCode == r.appliedRefCode) {
+						if (
+							recordsList[i].assignedRefCode == r.appliedRefCode &&
+              r.id != recordsList[i].id &&
+              recordsList[i].assignedRefCode != null &&
+              r.appliedRefCode != null
+						) {
 							recordsList[i].numPeopleReferred++;
 						}
 					});
@@ -109,13 +141,22 @@ const updateReferrals = () => {
 					recordsList.map(r => {
 						if (
 							recordsList[i].appliedRefCode == r.assignedRefCode &&
-              r.id != recordsList[i].id
+              r.id != recordsList[i].id &&
+              recordsList[i].appliedRefCode != null
 						) {
-							recordsList[i].appliedRefCodeBoost += 2; // 2 credits per referred person
+							recordsList[i].appliedRefCodeBoost = 2;
 						}
 					});
 
-					// Update ref credits
+					// Check if marketing ref code
+
+					await marketingRefCodes.map(c => {
+						if (recordsList[i].appliedRefCode == c.code && c.code != null) {
+							recordsList[i].appliedRefCodeBoost = c.credits;
+						}
+					});
+
+					// Push updates
 					if (
 						recordsList[i].numPeopleReferred !=
               recordsList[i].recordedNumPeopleReferred ||
@@ -157,6 +198,10 @@ client.on('message', async message => {
 	const args = contents.slice(2);
 	if (contents[0] === config.prefix) {
 		if (['referralUpdate', 'ru'].includes(cmd)) {
+			if (message.channel.id != config.botChannel) {
+				return message.channel.send('Sorry buddy, you can\'t do that here.');
+			}
+
 			await message.channel.send('Updating referral codes...');
 			return updateReferrals();
 		}
