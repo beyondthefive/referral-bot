@@ -72,7 +72,9 @@ const updateReferrals = async () => {
 				const recordsSection = [];
 				records.forEach(async record => {
 					if (record.get('Assigned Referral Code') == null) {
-						const code = crc32(record.get('Name') + record.get('Submission Time')).toString(16);
+						const code = crc32(
+							record.get('Name') + record.get('Submission Time')
+						).toString(16);
 						base('Students')
 							.update([
 								{
@@ -192,6 +194,126 @@ const updateReferrals = async () => {
 		);
 };
 
+const profile = message => {
+	base('Students')
+		.select({
+			view: 'Grid view'
+		})
+		.eachPage(
+			function page(records, fetchNextPage) {
+				records.forEach(async record => {
+					if (record.get('Discord User ID') == message.member.id) {
+						message.channel.send(
+							'Your student profile has been messaged to you <@' +
+                message.member.id +
+                '>.'
+						);
+						channels = '';
+						record
+							.get('Courses Channels')
+							.join(', ') // Need for courses with more than one channel
+							.split(', ')
+							.map(i => {
+								channels += '<#' + i + '>\n';
+							});
+
+						const acode = record.get('Applied Referral Code');
+
+						if (acode) {
+							afr =
+                'You applied to BT5 with the referral code: `' +
+                record.get('Applied Referral Code') +
+                '`\nThis referral code had a value of ' +
+                record.get('Applied Code Credit Boost') +
+                ' credits.';
+						} else {
+							afr =
+                'You did not apply to BT5 with a referral Code. If you have a referral code and would like to apply it to your profile, email admissions. You can only redeem 1 referral code.';
+						}
+
+						const m = {
+							title: 'Beyond The Five',
+							description: 'This is your Beyond The Five student profile.',
+							url: 'https://beyondthefive.com',
+							color: 2123412,
+							timestamp: '2020-07-05T04:58:19.535Z',
+							footer: {
+								icon_url: 'https://beyondthefive.com/logo.png',
+								text: 'Beyond The Five'
+							},
+							thumbnail: {
+								url: 'https://beyondthefive.com/logo.png'
+							},
+							fields: [
+								{
+									name: 'Name',
+									value: record.get('Name'),
+									inline: true
+								},
+								{
+									name: 'Email',
+									value: record.get('Email'),
+									inline: true
+								},
+								{
+									name: 'Courses',
+									value: record.get('Courses List')
+								},
+								{
+									name: 'Class Channels',
+									value: channels
+								},
+								{
+									name: 'Credits',
+									value:
+                    'You are in ' +
+                    record.get('Available Credits') +
+                    ' credits.'
+								},
+								{
+									name: 'Applied Referral Code',
+									value: afr
+								},
+								{
+									name: 'Referral Code',
+									value:
+                    'Your assigned referral code is: `' +
+                    record.get('Assigned Referral Code') +
+                    '`\nFor every person that uses this referral code, not only do they get 2 extra credits, but you also get 2 extra credits!'
+								},
+
+								{
+									name: 'Referral Code Usage',
+									value:
+                    'Your referral code has been used `' +
+                    record.get('# People Referred') +
+                    '` times for a total of `' +
+                    record.get('Referral Credit Boost') +
+                    '` extra credits.'
+								},
+								{
+									name: 'Questions?',
+									value:
+                    'If you would like to make a change to your student profile, such as add or drop classes, email `admissions@beyondthefive.com`.\nYour profile statistics update every 6 hours.'
+								}
+							]
+						};
+						await message.member.send({embed: m});
+
+						return message.channel.stopTyping();
+					}
+				});
+
+				fetchNextPage();
+			},
+			function done(err) {
+				if (err) {
+					console.error(err);
+				}
+			}
+		);
+};
+
 client.on('message', async message => {
 	const contents = message.content.toLowerCase().split(' ');
 	const cmd = contents[1];
@@ -206,8 +328,21 @@ client.on('message', async message => {
 			return updateReferrals();
 		}
 
-		if (['referrals', 'referral', 'ref'].includes(cmd)) {
-			return message.channel.send('hi');
+		if (
+			['referrals', 'referral', 'ref', 'profile', 'classes', 'my'].includes(cmd)
+		) {
+			if (
+				message.member.roles.cache.find(
+					role => role.id == config.enrolledRole
+				)
+			) {
+				message.channel.startTyping();
+				return profile(message);
+			}
+
+			return message.channel.send(
+				'You need to be an enrolled student to use this command.\nIf you have been accepted into your courses and do not have access to this command yet, please wait ~6 hours. If you still to not have access contact a staff member.'
+			);
 		}
 	}
 });
