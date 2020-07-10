@@ -203,7 +203,7 @@ const profile = message => {
 			function page(records, fetchNextPage) {
 				records.forEach(async record => {
 					if (record.get('Discord User ID') == message.member.id) {
-						message.channel.send(
+						await message.channel.send(
 							'Your student profile has been messaged to you <@' +
                 message.member.id +
                 '>.'
@@ -279,7 +279,7 @@ const profile = message => {
 									value:
                     'Your assigned referral code is: `' +
                     record.get('Assigned Referral Code') +
-                    '`\nFor every person that uses this referral code, not only do they get 2 extra credits, but you also get 2 extra credits!'
+                    '`\nFor every person that uses this referral code during registration, not only do they get 2 extra credits, but you also get 2 extra credits!'
 								},
 
 								{
@@ -294,13 +294,11 @@ const profile = message => {
 								{
 									name: 'Questions?',
 									value:
-                    'If you would like to make a change to your student profile, such as add or drop classes, email `admissions@beyondthefive.com`.\nYour profile statistics update every 6 hours.'
+                    'If you would like to make updates to your student profile, such as adding or dropping classes, email `admissions@beyondthefive.com`.\nYour profile statistics update every 6 hours.\nIf you have questions about BT5, please ask them in <#697302048827506778>.'
 								}
 							]
 						};
-						await message.member.send({embed: m});
-
-						return message.channel.stopTyping();
+						return message.member.send({embed: m});
 					}
 				});
 
@@ -337,11 +335,12 @@ client.on('message', async message => {
 				)
 			) {
 				message.channel.startTyping();
-				return profile(message);
+				await profile(message);
+				return message.channel.stopTyping();
 			}
 
 			return message.channel.send(
-				'You need to be an enrolled student to use this command.\nIf you have been accepted into your courses and do not have access to this command yet, please wait ~6 hours. If you still to not have access contact a staff member.'
+				'You need to be an enrolled student to use this command.\nIf you have been accepted do not have access to this command yet, please wait ~6 hours. If you still to not have access contact a staff member.'
 			);
 		}
 	}
