@@ -234,15 +234,15 @@ const profile = message => {
 						const m = {
 							title: 'Beyond The Five',
 							description: 'This is your Beyond The Five student profile.',
-							url: 'https://beyondthefive.com',
+							url: 'https://beyondthefive.org',
 							color: 2123412,
 							timestamp: '2020-07-05T04:58:19.535Z',
 							footer: {
-								icon_url: 'https://beyondthefive.com/logo.png',
+								icon_url: 'https://beyondthefive.org/logo.png',
 								text: 'Beyond The Five'
 							},
 							thumbnail: {
-								url: 'https://beyondthefive.com/logo.png'
+								url: 'https://beyondthefive.org/logo.png'
 							},
 							fields: [
 								{
@@ -294,7 +294,7 @@ const profile = message => {
 								{
 									name: 'Questions?',
 									value:
-                    'If you would like to make updates to your student profile, such as adding or dropping classes, email `admissions@beyondthefive.com`.\nYour profile statistics update every 6 hours.\nIf you have questions about BT5, please ask them in <#697302048827506778>.'
+                    'If you would like to make updates to your student profile, such as adding or dropping classes, email `admissions@beyondthefive.org`.\nYour profile statistics update every 6 hours.\nIf you have questions about BT5, please ask them in <#697302048827506778>.'
 								}
 							]
 						};
