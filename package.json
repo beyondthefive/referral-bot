@@ -9,7 +9,7 @@
   "dependencies": {
     "airtable": "^0.10.1",
     "crc": "^3.8.0",
-    "discord.js": "12.5.1",
+    "discord.js": "12.5.3",
     "dotenv": "^8.2.0"
   },
   "devDependencies": {
