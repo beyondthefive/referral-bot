@@ -203,10 +203,8 @@ const profile = message => {
 			function page(records, fetchNextPage) {
 				records.forEach(async record => {
 					if (record.get('Discord User ID') == message.member.id) {
-						await message.channel.send(
-							'Your student profile has been messaged to you <@' +
-                message.member.id +
-                '>.'
+						await message.reply(
+							'Your student profile has been messaged to you.'
 						);
 						channels = '';
 						record
