@@ -2,8 +2,7 @@
   "name": "referral-bot",
   "scripts": {
     "dev": "nodemon bot.js",
-    "start": "node bot.js",
-    "lint": "xo --fix"
+    "start": "node bot.js"
   },
   "main": "bot.js",
   "dependencies": {
